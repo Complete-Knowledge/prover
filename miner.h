@@ -1346,9 +1346,9 @@ struct pool
 
 struct work
 {
-    unsigned char   data[128];
+    unsigned char   data[128]; // pool header (and possibly merkle root)
     unsigned char   midstate[32];
-    unsigned char   target[32];
+    unsigned char   target[32]; // derived by applying set_target to work->sdiff
     unsigned char   hash[32];
 
     /* This is the diff the device is currently aiming for and must be

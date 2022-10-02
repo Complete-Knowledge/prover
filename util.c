@@ -2341,10 +2341,14 @@ bool parse_method(struct pool *pool, char *s)
 
     if (!strncasecmp(buf, "mining.notify", 13))
     {
-        if (parse_notify(pool, params))
+        if (parse_notify(pool, params)) {
+            applog(LOG_NOTICE, "notify method parsed successfully!");
             pool->stratum_notify = ret = true;
-        else
+        }
+        else {
+            applog(LOG_NOTICE, "notify method FAILED!");
             pool->stratum_notify = ret = false;
+        }
         goto out_decref;
     }
 
@@ -3060,7 +3064,7 @@ resend:
         goto out;
     }
     n2size = json_integer_value(json_array_get(res_val, 2));
-    if (n2size < 2 || n2size > 16)
+    if (n2size < 1 || n2size > 16)
     {
         applog(LOG_INFO, "Failed to get valid n2size in initiate_stratum");
         free(sessionid);

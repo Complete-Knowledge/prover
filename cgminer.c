@@ -5704,9 +5704,14 @@ static void _stage_work(struct work *work)
 {
     applog(LOG_DEBUG, "Pushing work from pool %d to hash queue", work->pool->pool_no);
     work->work_block = work_block;
+    applog(LOG_NOTICE, "_stage_work func: testing work with job ID %s", work->job_id);
     test_work_current(work);
     work->pool->works++;
-    hash_push(work);
+    applog(LOG_NOTICE, "_stage_work func: Pushing work with job ID %s", work->job_id);
+    bool ret = hash_push(work);
+    applog(LOG_NOTICE, "_stage_work func: Pushed success: %d", ret);
+    applog(LOG_NOTICE, "_stage_work func: Total staged %d ", __total_staged());
+
 }
 
 
@@ -7466,6 +7471,7 @@ static void *stratum_rthread(void *userdata)
             }
             continue;
         }
+        applog(LOG_NOTICE, "RECEIVED MESSAGE %s", s);
 
         /* Check this pool hasn't died while being a backup pool and
          * has not had its idle flag cleared */
@@ -7477,6 +7483,7 @@ static void *stratum_rthread(void *userdata)
         }
         else if (pool->swork.clean)
         {
+            applog(LOG_NOTICE, "CLEAN WORK %s", s);
             struct work *work = make_work(); // else if (pool->swork.clean)
 
             /* Generate a single work item to update the current
@@ -12088,21 +12095,26 @@ begin_bench:
     {
         int ts, max_staged = max_queue;
         struct pool *pool;
-
+        applog(LOG_NOTICE, "Main Loop: TOP");
         if (opt_work_update)
         {
+            applog(LOG_NOTICE, "Main Loop: work_updata TRUE");
             signal_work_update();
+        } else {
+            applog(LOG_NOTICE, "Main Loop: work_updata false");
         }
 
         opt_work_update = false;
 
         mutex_lock(stgd_lock);
         ts = __total_staged();
+        applog(LOG_NOTICE, "Main Loop: Total staged %d ", ts);
         /* Wait until hash_pop tells us we need to create more work */
 
         if (ts > max_staged)
         {
             work_filled = true;
+            applog(LOG_NOTICE, "Main Loop: work filled!!");
             pthread_cond_wait(&gws_cond, stgd_lock);
             ts = __total_staged();
         }
@@ -12111,6 +12123,7 @@ begin_bench:
 
         if (ts > max_staged)
         {
+            applog(LOG_NOTICE, "Main Loop: still work filled!!");
             /* Keeps slowly generating work even if it's not being
              * used to keep last_getwork incrementing and to see
              * if pools are still alive. */
@@ -12127,6 +12140,7 @@ begin_bench:
 
         if (work)
         {
+            applog(LOG_NOTICE, "Main Loop: discarding dummy work!!");
             discard_work(work); /* main loop */
         }
 
@@ -12138,6 +12152,7 @@ begin_bench:
 
             if (!pool_unusable(pool))
             {
+
                 break;
             }
 
@@ -12146,14 +12161,16 @@ begin_bench:
 
             if (pool_unusable(pool))
             {
+                applog(LOG_NOTICE, "Main Loop: pool unusable, sleeping :(");
                 cgsleep_ms(11);
             }
         };
+        applog(LOG_NOTICE, "Main Loop: pool usable:)");
 
         if (pool->has_stratum)
         {
             gen_stratum_work(pool, work);
-            applog(LOG_DEBUG, "Generated stratum work");
+            applog(LOG_NOTICE, "Main loop: Generated stratum work with job ID %s, now staging", work->job_id);
             stage_work(work);
             continue;
         }

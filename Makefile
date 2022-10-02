@@ -80,7 +80,10 @@ SRCDIRS   = . ccan/opt compat/jansson-2.6/src lib
 
 # The executable file name.
 # If not specified, current directory name or `a.out' will be used.
-PROGRAM   = bmminer
+PROGRAM   = ck-prover
+
+XILINX_BASE_PATH=$(CURDIR)/build-tools/gcc-linaro-arm-linux-gnueabihf-4.7-2012.11-20121123_linux
+XILINX_OTHER_LIB_BASE_PATH=$(CURDIR)/build-tools/prebuilt-libz/linux-armhf
 
 ## Implicit Section: change the following only when necessary.
 ##==========================================================================
